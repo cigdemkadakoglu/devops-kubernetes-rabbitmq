@@ -1,0 +1,70 @@
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- name: "namespace"
+  value: "rabbitmq-ns"
+
+steps:
+- task: Kubernetes@1
+  displayName: Deploying RabbitMQ Cluster Operator to Azure Kubernetes Service
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    command: 'create'
+    useConfigurationFile: true
+    configuration: 'cluster-operator.yml'
+
+- task: Kubernetes@1
+  displayName: Creating $(namespace) Namespace
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    command: 'create'
+    arguments: 'namespace $(namespace)'
+
+- task: Kubernetes@1
+  displayName: Creating Resource Quota for $(namespace) Namespace
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    namespace: '$(namespace)'
+    command: 'create'
+    useConfigurationFile: true
+    configuration: 'resourcequota.yml'
+
+- task: Kubernetes@1
+  displayName: Getting Custom Resource Definition
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    command: 'get'
+    arguments: 'customresourcedefinitions.apiextensions.k8s.io'
+
+- task: Kubernetes@1
+  displayName: Deploying RabbitMQ to Azure Kubernetes Service
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    namespace: $(namespace)
+    command: 'create'
+    useConfigurationFile: true
+    configuration: 'rabbitmq-cluster.yml'
+
+- task: Kubernetes@1
+  displayName: Getting RabbitMQ Service Load Balancer IP
+  enabled: true
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-connection'
+    namespace: $(namespace)
+    command: 'get'
+    arguments: 'services rabbitmqcluster-prod  --output jsonpath=''{.status.loadBalancer.ingress[0].ip}'''
