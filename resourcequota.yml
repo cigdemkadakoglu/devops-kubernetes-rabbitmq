@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: rabbitmq-ns-rq
+spec:
+  hard:
+    requests.cpu: "2000m"
+    requests.memory: 2Gi
+    limits.cpu: "6000m"
+    limits.memory: 8Gi
