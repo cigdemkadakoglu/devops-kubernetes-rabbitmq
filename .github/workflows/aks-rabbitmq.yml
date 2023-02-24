@@ -35,10 +35,12 @@ jobs:
           cluster-operator.yml
         action: deploy
     
-    - name: "Create devlopment environments namespace"
-      uses: okteto/create-namespace@latest
-      with:
-        namespace: drabbitmq-ns
+    - name: Creating rabbitmq-ns Namespace
+      uses: Azure/k8s-deploy@v1
+      with:        
+        manifests: |
+          namespace.yml
+        action: deploy
     
     - name: Creating Resource Quota for rabbitmq-ns Namespace
       uses: Azure/k8s-deploy@v1
