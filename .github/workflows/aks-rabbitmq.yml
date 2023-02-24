@@ -48,5 +48,5 @@ jobs:
       with:
         namespace: rabbitmq-ns
         manifests: |
-          rabbitmq-cluster.yaml
+          rabbitmq-cluster.yml
         action: deploy
