@@ -1,0 +1,52 @@
+name: AKS RabbitMQ Deployment  
+
+on: workflow_dispatch
+
+permissions:
+  id-token: write
+  contents: read
+      
+jobs: 
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: 'Az CLI login'
+      uses: azure/login@v1
+      with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    
+    - name: Azure Kubernetes set context
+      uses: Azure/aks-set-context@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+        cluster-name: ${{ secrets.AZURE_CLUSTER_NAME }}
+   
+    - name: Deploying RabbitMQ Cluster Operator to Azure Kubernetes Service
+      uses: Azure/k8s-deploy@v1
+      with:        
+        namespace: rabbitmq-system
+        manifests: |
+          cluster-operator.yml
+        action: deploy
+    
+    - name: Creating Resource Quota for rabbitmq-ns Namespace
+      uses: Azure/k8s-deploy@v1
+      with:        
+        namespace: rabbitmq-ns
+        manifests: |
+          resourcequota.yml
+        action: deploy
+        
+    - name: Deploying RabbitMQ to Azure Kubernetes Service
+      uses: Azure/k8s-deploy@v1
+      with:
+        namespace: rabbitmq-ns
+        manifests: |
+          rabbitmq-cluster.yaml
+        action: deploy
